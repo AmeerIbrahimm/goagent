@@ -3,12 +3,13 @@ package tracer
 import (
 	"context"
 
+	"github.com/AmeerIbrahimm/goagent/config"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	// semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 
 	"google.golang.org/grpc"
 )
@@ -29,8 +30,8 @@ func NewResource(ctx context.Context) (*resource.Resource, error) {
 	return resource.New(ctx,
 		resource.WithAttributes(
 			// the service name used to display traces in backends
-			semconv.ServiceNameKey.String("otel-otlp-go-service"),
-			attribute.String("application", "otel-otlp-go-app"),
+			attribute.String("service.name", config.ServiceName),
+			attribute.String("library.language", "go"),
 		),
 	)
 }

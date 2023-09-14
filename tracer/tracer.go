@@ -14,24 +14,60 @@ import (
 	"google.golang.org/grpc"
 )
 
+var (
+	exporter *otlptrace.Exporter
+	bsp      *sdktrace.SpanProcessor
+	tracr    *sdktrace.TracerProvider
+)
+
 func NewTraceProvider(res *resource.Resource, bsp sdktrace.SpanProcessor) *sdktrace.TracerProvider {
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	)
+	setTracerProvider(tracerProvider)
 	return tracerProvider
 }
 
 func NewExporter(ctx context.Context, conn *grpc.ClientConn) (*otlptrace.Exporter, error) {
-	return otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	setExporter(exp)
+
+	return exp, err
 }
 func NewResource(ctx context.Context) (*resource.Resource, error) {
 	return resource.New(ctx,
 		resource.WithAttributes(
 			// the service name used to display traces in backends
 			attribute.String("service.name", config.ServiceName),
-			attribute.String("library.language", "go"),
+			attribute.String("service.identifier", config.ServiceIdentifier),
+			attribute.String("app.name", config.AppName),
+			attribute.String("telemetry.sdk.language", "go"),
 		),
 	)
+}
+
+func setExporter(exportr *otlptrace.Exporter) {
+	exportr = exportr
+}
+
+func GetExporter() *otlptrace.Exporter {
+	return exporter
+}
+
+func setSpanProcessor(processor *sdktrace.SpanProcessor) {
+	bsp = processor
+}
+
+func GetProcessor() *sdktrace.SpanProcessor {
+	return bsp
+}
+
+func setTracerProvider(tcr *sdktrace.TracerProvider) {
+	tracr = tcr
+}
+
+func GetTracerProvider() *sdktrace.TracerProvider {
+	return tracr
 }

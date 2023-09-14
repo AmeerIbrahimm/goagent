@@ -127,9 +127,11 @@ func Middleware(opts ...Option) fiber.Handler {
 			semconv.HTTPAttributesFromHTTPStatusCode(c.Response().StatusCode()),
 			semconv.HTTPRouteKey.String(c.Route().Path), // no need to copy c.Route().Path: route strings should be immutable across app lifecycle
 		)
-
 		if resBody := string(c.Response().Body()); resBody != "" {
 			responseAttrs = append(responseAttrs, HTTPResponseBody.String(resBody))
+		}
+		if respHeaders := getRespHeadersAttrs(c.GetRespHeaders()); len(respHeaders) > 0 {
+			responseAttrs = append(responseAttrs, respHeaders...)
 		}
 
 		requestSize := int64(len(c.Request().Body()))

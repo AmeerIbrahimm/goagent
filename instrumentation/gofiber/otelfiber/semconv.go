@@ -2,6 +2,7 @@ package otelfiber
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -43,9 +44,13 @@ func httpServerTraceAttributesFromRequest(c *fiber.Ctx, cfg config) []attribute.
 		semconv.HTTPUserAgentKey.String(string(utils.CopyBytes(c.Request().Header.UserAgent()))),
 		semconv.NetHostNameKey.String(utils.CopyString(c.Hostname())),
 		semconv.NetTransportTCP,
+		semconv.HTTPHostKey.String(utils.CopyString(c.Hostname())),
 	}
 	if reqBody := string(c.Request().Body()); reqBody != "" {
 		attrs = append(attrs, HTTPRequestBody.String(reqBody))
+	}
+	if reqHeaders := getReqHeadersAttrs(c.GetRespHeaders()); len(reqHeaders) > 0 {
+		attrs = append(attrs, reqHeaders...)
 	}
 
 	if cfg.Port != nil {
@@ -113,3 +118,21 @@ const (
 	HTTPRequestBody  = attribute.Key(`http.request.body`)
 	HTTPResponseBody = attribute.Key(`http.response.body`)
 )
+
+func getReqHeadersAttrs(headers map[string]string) []attribute.KeyValue {
+	headerAttrs := make([]attribute.KeyValue, 0)
+	for k, v := range headers {
+		header := attribute.Key(fmt.Sprintf(`http.request.header.%s`, k)).String(v)
+		headerAttrs = append(headerAttrs, header)
+	}
+	return headerAttrs
+}
+
+func getRespHeadersAttrs(headers map[string]string) []attribute.KeyValue {
+	headerAttrs := make([]attribute.KeyValue, 0)
+	for k, v := range headers {
+		header := attribute.Key(fmt.Sprintf(`http.response.header.%s`, k)).String(v)
+		headerAttrs = append(headerAttrs, header)
+	}
+	return headerAttrs
+}
